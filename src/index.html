@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Vive Solar</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+  <script>
+
+    function mostrarGrafico() {
+      $.ajax({
+        url: '/graficar/' + $("#sl_paises").val() + "/" + $("#sl_grafico").val(),
+        type: 'GET',
+        success: function(r) {
+          $("#info").html(r);
+        }
+      });
+    }
+
+    function cargarData() {
+      $.ajax({
+        url: '/cargarfuentedatos',
+        type: 'GET',
+        success: function(r) {
+          $("#info").html(r);
+          $('#t_datos').DataTable();
+        }
+      });
+    }
+    
+    function calculadora() {
+     const calculatorForm = `
+     <div class="row">
+      <div class="col-md-6">
+        <label for="tipoElectrodomestico" class="form-label">Tipo de Electrodoméstico:</label>
+        <select id="tipoElectrodomestico" class="form-control">
+          <option value="tv">TV</option>
+          <option value="nevera">Nevera</option>
+          <option value="refrigerador">Refrigerador</option>
+          <option value="aireAcondicionado">Aire Acondicionado</option>
+          <option value="computadora">Computadora</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="consumoMensual" class="form-label">Consumo mensual (kWh):</label>
+        <input type="number" id="consumoMensual" class="form-control" placeholder="Ingrese consumo mensual en kWh">
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <label for="horasLuz" class="form-label">Horas de luz promedio al día:</label>
+        <input type="number" id="horasLuz" class="form-control" placeholder="Ingrese horas promedio">
+      </div>
+      <div class="col-md-6">
+        <label for="capacidadBateria" class="form-label">Capacidad de batería (kWh):</label>
+        <input type="number" id="capacidadBateria" class="form-control" placeholder="Capacidad por batería">
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-12 text-center">
+        <button onclick="calcularPanelesYBaterias()" class="btn btn-primary">Calcular</button>
+      </div>
+    </div>
+    <div id="resultado" class="mt-4"></div>
+  `;
+  $("#info2").html(calculatorForm);
+}
+
+function calcularPanelesYBaterias() {
+  const consumoMensual = parseFloat($("#consumoMensual").val());
+  const horasLuz = parseFloat($("#horasLuz").val());
+  const capacidadBateria = parseFloat($("#capacidadBateria").val());
+
+  if (!consumoMensual || !horasLuz || !capacidadBateria) {
+    $("#resultado").html("<div class='alert alert-danger'>Por favor, complete todos los campos correctamente.</div>");
+    return;
+  }
+
+  const eficiencia = 0.9;  // Suposición de eficiencia del sistema del 90%
+  const potenciaPanel = 0.3;  // Potencia por panel solar: 0.3 kW
+
+  // Cálculo de energía diaria requerida considerando eficiencia
+  const consumoDiario = consumoMensual / 30;
+  const energiaDiariaConEficiencia = consumoDiario / eficiencia;
+
+  const energiaPorPanel = potenciaPanel * horasLuz;
+  const panelesRequeridos = Math.ceil(energiaDiariaConEficiencia / energiaPorPanel);
+
+  const bateriasRequeridas = Math.ceil(consumoMensual / capacidadBateria);
+
+  const resultadoHTML = `
+    <div class='alert alert-success'>
+      <h4>Resultados:</h4>
+      <p><strong>Consumo mensual:</strong> ${consumoMensual} kWh</p>
+      <p><strong>Paneles solares necesarios:</strong> ${panelesRequeridos} panel(es)</p>
+      <p><strong>Baterías necesarias:</strong> ${bateriasRequeridas} batería(s)</p>
+      <p><strong>Eficiencia del sistema:</strong> ${(eficiencia * 100).toFixed(2)}%</p>
+    </div>
+  `;
+  $("#resultado").html(resultadoHTML);
+ } 
+</script> 
+<style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    footer {
+      background-color: #046614;
+      color: white;
+      padding: 25px;
+    }
+    .jumbotron {
+      background: url('') no-repeat center center;
+      background-size: cover;
+      color: white;
+    }
+    .jumbotron h1, .jumbotron p {
+      color: #07d144;
+      text-shadow: 2px 2px 4px #110e0e;
+    }
+    .section-title {
+      color: #0e754a;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .bg-green {
+      background-color: #e8f5e9;
+      padding: 20px 0;
+    }
+    .service-icon {
+      font-size: 60px;
+      color: #e26e0f;
+      margin-bottom: 15px;
+    }
+    .btn-custom {
+      background-color: #00796B;
+      color: white;
+      border: none;
+    }
+    .btn-custom:hover {
+      background-color: #056e1c;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Encabezado -->
+<div style="background: #1b5e20; padding: 50px; text-align: center;">
+  <h1 style="color: #aeea00; font-family: 'Pacifico', cursive; font-weight: bold; text-shadow: 0 0 15px #ffeb3d;">
+    🌞 Vive Solar 🌞
+  </h1>
+  <p style="color: #d4e157; font-size: 24px;">Tu camino hacia la sostenibilidad y el ahorro</p>
+</div>
+
+<!-- Sección de Misión -->
+<div class="container-fluid text-center">
+  <h2 class="section-title">Nuestra Misión</h2>
+  <p>Proveer soluciones solares residenciales eficientes y sostenibles, garantizando ahorro y responsabilidad ambiental.</p>
+</div>
+
+<!-- Nuestros Servicios -->
+<div id="servicios" class="container-fluid bg-green text-center">
+  <h2 class="section-title">Nuestros Servicios</h2>
+  <div class="row">
+    <!-- Instalación residencial -->
+    <div class="col-sm-4">
+      <i class="fas fa-home service-icon"></i> 
+      <h4>Instalaciones Residenciales</h4>
+      <p>Soluciones personalizadas para hogares, optimizando costos y promoviendo la energía limpia.</p>
+    </div>
+    <div class="col-sm-4">
+      <i class="fas fa-battery-half service-icon"></i>
+      <h4>Soluciones de Almacenamiento</h4>
+      <p>Instalación de baterías solares para asegurar el suministro continuo y ahorrar en tu factura eléctrica.</p>
+    </div>
+    <!-- Consultoría -->
+    <div class="col-sm-4">
+      <i class="fas fa-tools service-icon"></i>
+      <h4>Consultoría</h4>
+      <p>Asesoría y soporte para asegurar el rendimiento y la durabilidad de tus sistemas solares.</p>
+    </div>
+  </div>
+</div><!-- Por qué elegirnos -->
+<div class="container-fluid text-center">
+  <h1 class="section-title">Por Qué Elegirnos</h1>
+  <div class="row">
+    <div class="col-sm-3">
+      <i class="fas fa-lightbulb service-icon"></i>
+      <h4>Innovación</h4>
+      <p>Implementamos tecnología avanzada para garantizar la máxima eficiencia.</p>
+    </div>
+
+
+    <div class="col-sm-3">
+      <i class="fas fa-handshake service-icon"></i>
+      <h4>Compromiso</h4>
+      <p>Soluciones sostenibles enfocadas en el bienestar del cliente y el medio ambiente.</p>
+    </div>
+    <div class="col-sm-3">
+      <i class="fas fa-award service-icon"></i>
+      <h4>Experiencia</h4>
+      <p>Más de 5 años liderando proyectos solares residenciales.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Sección del Proyecto -->
+<div class="container-fluid text-center">
+  <h2 class="section-title"style="color: #002855;">Proyecto</h2>
+  <p>Explora nuestro proyecto e interactúa con nosotros:</p>
+
+  <div class="panel-group" id="accordion">
+    <!-- Fuente de datos -->
+    <div class="panel panel-default">
+      <div class="panel-heading" style="background-color: #cbe922b4;" onclick="cargarData()">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+            Fuente de datos
+          </a>
+        </h4>
+      </div>
+      <div id="collapse1" class="panel-collapse collapse">
+        <div class="panel-body" id="info">Información pendiente.</div>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading" style="background-color: #cbe922b4;" onclick="calculadora()">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+            Calculadora Solar Residencial
+          </a>
+        </h4>
+      </div>
+      <div id="collapse3" class="panel-collapse collapse">
+        <div class="panel-body" id="info2">Información pendiente.</div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+<!-- Footer -->
+<footer class="container-fluid text-center">
+  <p>© 2024 Vive Solar | Iluminando el Futuro con Energía Solar 🌞 </p>
+</footer>
+
+</body>
+</html>
